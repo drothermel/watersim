@@ -26,7 +26,6 @@ class Water{
 		double m_th; //H20 orientation
 
 		void update_pos(double disp, double angle, double dtheta);
-		static double add(double x, double y);
 
 	private:
 		double m_docm; //Distance from oxygen and CM
