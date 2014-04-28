@@ -44,3 +44,8 @@ void Water::update_oab(){
 	m_bl.x = m_ol.x - cos(HOH_A/2.0 + m_th);
 	m_bl.y = m_ol.y - sin(HOH_A/2.0 + m_th);
 }
+
+double Water::add(double x, double y){
+
+	return x+y;
+}

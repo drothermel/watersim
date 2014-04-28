@@ -7,6 +7,11 @@ const double ROH = 1.0;
 struct Point{
 	double x;
 	double y;
+
+	Point(){
+		x=0;
+		y=0;
+	}
 };
 
 class Water{
@@ -21,6 +26,7 @@ class Water{
 		double m_th; //H20 orientation
 
 		void update_pos(double disp, double angle, double dtheta);
+		static double add(double x, double y);
 
 	private:
 		double m_docm; //Distance from oxygen and CM
