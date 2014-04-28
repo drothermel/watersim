@@ -96,41 +96,65 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named main
+# Target rules for targets named water_main
 
 # Build rule for target.
-main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 main
-.PHONY : main
+water_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 water_main
+.PHONY : water_main
 
 # fast build rule for target.
-main/fast:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-.PHONY : main/fast
+water_main/fast:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/build
+.PHONY : water_main/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+Main.o: Main.cpp.o
+.PHONY : Main.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.o
-.PHONY : main.cpp.o
+Main.cpp.o:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Main.cpp.o
+.PHONY : Main.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+Main.i: Main.cpp.i
+.PHONY : Main.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
+Main.cpp.i:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Main.cpp.i
+.PHONY : Main.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+Main.s: Main.cpp.s
+.PHONY : Main.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
+Main.cpp.s:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Main.cpp.s
+.PHONY : Main.cpp.s
+
+Water.o: Water.cpp.o
+.PHONY : Water.o
+
+# target to build an object file
+Water.cpp.o:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Water.cpp.o
+.PHONY : Water.cpp.o
+
+Water.i: Water.cpp.i
+.PHONY : Water.i
+
+# target to preprocess a source file
+Water.cpp.i:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Water.cpp.i
+.PHONY : Water.cpp.i
+
+Water.s: Water.cpp.s
+.PHONY : Water.s
+
+# target to generate assembly for a file
+Water.cpp.s:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/Water.cpp.s
+.PHONY : Water.cpp.s
 
 # Help Target
 help:
@@ -139,11 +163,14 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
-	@echo "... main"
 	@echo "... rebuild_cache"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... water_main"
+	@echo "... Main.o"
+	@echo "... Main.i"
+	@echo "... Main.s"
+	@echo "... Water.o"
+	@echo "... Water.i"
+	@echo "... Water.s"
 .PHONY : help
 
 

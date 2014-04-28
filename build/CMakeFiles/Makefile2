@@ -50,38 +50,38 @@ CMAKE_SOURCE_DIR = /home/danielle/course/compphys/final
 CMAKE_BINARY_DIR = /home/danielle/course/compphys/final/build
 
 #=============================================================================
-# Target rules for target CMakeFiles/main.dir
+# Target rules for target CMakeFiles/water_main.dir
 
 # All Build rule for target.
-CMakeFiles/main.dir/all:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/depend
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/danielle/course/compphys/final/build/CMakeFiles  1
-	@echo "Built target main"
-.PHONY : CMakeFiles/main.dir/all
+CMakeFiles/water_main.dir/all:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/depend
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/danielle/course/compphys/final/build/CMakeFiles  1 2
+	@echo "Built target water_main"
+.PHONY : CMakeFiles/water_main.dir/all
 
 # Include target in all.
-all: CMakeFiles/main.dir/all
+all: CMakeFiles/water_main.dir/all
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/main.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/danielle/course/compphys/final/build/CMakeFiles 1
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/main.dir/all
+CMakeFiles/water_main.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/danielle/course/compphys/final/build/CMakeFiles 2
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/water_main.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/danielle/course/compphys/final/build/CMakeFiles 0
-.PHONY : CMakeFiles/main.dir/rule
+.PHONY : CMakeFiles/water_main.dir/rule
 
 # Convenience name for target.
-main: CMakeFiles/main.dir/rule
-.PHONY : main
+water_main: CMakeFiles/water_main.dir/rule
+.PHONY : water_main
 
 # clean rule for target.
-CMakeFiles/main.dir/clean:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/clean
-.PHONY : CMakeFiles/main.dir/clean
+CMakeFiles/water_main.dir/clean:
+	$(MAKE) -f CMakeFiles/water_main.dir/build.make CMakeFiles/water_main.dir/clean
+.PHONY : CMakeFiles/water_main.dir/clean
 
 # clean rule for target.
-clean: CMakeFiles/main.dir/clean
+clean: CMakeFiles/water_main.dir/clean
 .PHONY : clean
 
 #=============================================================================
