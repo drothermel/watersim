@@ -1,34 +1,27 @@
 #ifndef WATER_H
 #define WATER_H
 
-const double HOH_A = 109.47;
-const double ROH = 1.0;
-
-struct Point{
-	double x;
-	double y;
-
-	Point(){
-		x=0;
-		y=0;
-	}
-};
+#include "Library.h"
 
 class Water{
 	
 	public:
+		Water() {}
 		Water(double xc, double yc, double theta_rad);
 		
-		Point m_cl; //COM location
-		Point m_ol; //Oxygen location
-		Point m_al; //Ha location
-		Point m_bl; //Hb location
-		double m_th; //H20 orientation
+		Point m_x; //COM location
+		Point m_v; //Velocity of molecule
 
-		void update_pos(double disp, double angle, double dtheta);
+		Point m_ol; //Oxygen location (th = 0)
+		Point m_al; //Ha location (th = 0)
+		Point m_bl; //Hb location (th = 0)
+
+		void update_pos(Point newpos);
+		void update_vel(Point newvel);
 
 	private:
 		double m_docm; //Distance from oxygen and CM
+		double m_I; //Moment of inertia
 		void update_oab();
 
 };
