@@ -7,12 +7,12 @@
 class MD{
 	
 	public:
-		MD(double box_length_angstroms, int num_molecules, int init_temp, int sim_length);
+		MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length);
 		virtual ~MD();
 
 		int m_N; //num particles
 		double m_L; //box length angstroms
-		int m_T; //initial temp
+		double m_T; //initial temp
 		int m_simL; //number of fs to run the sim, equivalent to number of timesteps since 1fs = timestep
 
 		void evolve();
@@ -37,6 +37,8 @@ class MD{
 		double calc_KE();
 		double calc_PE();
 		double calc_T();
+		void zero_total_momentum();
+		void scale_init_temps();
 
 };
 

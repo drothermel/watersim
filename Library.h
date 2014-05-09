@@ -2,6 +2,7 @@
 #define LIBRARY_H
 #include <cmath>
 #include <cstdio>
+#include <Cstdlib>
 
 #define HOH_A (109.47*M_PI/180) // Degrees
 #define ROH 1.0 // Angstrom

@@ -16,12 +16,13 @@ class Water{
 		Point m_al; //Ha location (th = 0)
 		Point m_bl; //Hb location (th = 0)
 
+		double m_I; //Moment of intertia
+
 		void update_pos(Point newpos);
 		void update_vel(Point newvel);
 
 	private:
 		double m_docm; //Distance from oxygen and CM
-		double m_I; //Moment of inertia
 		void update_oab();
 
 };
