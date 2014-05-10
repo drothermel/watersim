@@ -13,7 +13,7 @@ using namespace std;
 MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length){
 
 	//Error Check
-	if( sqrt((double)num_molecules) !=  (double)((int) sqrt((double)num_molecules)_){
+	if( sqrt((double)num_molecules) !=  (double)((int) sqrt((double)num_molecules) )) {
 		printf("Number of Molecules not a perfect square ==> problems will occur, you should end sim");
 	}
 
@@ -31,7 +31,7 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 	m_PE = new double[m_simL/ENERTS]; //an array of sim_length/ENERTS PEs
 
 	m_neigh = new Water*[m_N*m_N]; //an NxN array of neighbor pointers to Water molecules in m_molecs array
-	m_num_neigh = new double[m_N]; //an N array of number of neighbors for each molecule
+	m_num_neigh = new int[m_N]; //an N array of number of neighbors for each molecule
 }
 
 MD::~MD(){
@@ -48,7 +48,7 @@ MD::~MD(){
 //Sets the initial pos in lattice, random angle
 void MD::init_position(){
 	int sqN = (int)sqrt((double)m_N);
-	double dbet = (double)n_L/(double)sqN;
+	double dbet = (double)m_L/(double)sqN;
 
 	double xloc = dbet/2;
 	double yloc = dbet/2;
@@ -65,7 +65,8 @@ void MD::init_position(){
 				(double)(rand() % 100)-50,
 				(double)(rand() % 100)-50,
 				(double)(rand() % 100)-50
-			}
+			};
+			m_molecs[moln].m_moln = moln;
 			m_molecs[moln].update_pos(loc);
 			m_molecs[moln].update_vel(vel);
 
@@ -119,7 +120,7 @@ void MD::update_neighbors(){
 
 			// If w and o are close enough to each other
 			if(dist < RC){
-				m_neigh[m*m_N + m_num_neigh[m]] = wo; //set m's next neighbor pointer to wo
+				m_neigh[m*m_N + m_num_neigh[m]] = op; //set m's next neighbor pointer to wo
 				m_neigh[o*m_N + m_num_neigh[o]] = wp; //set o's next neighbor pointer to wp
 
 
@@ -136,15 +137,145 @@ void MD::single_timestep(){
 }
 
 double MD::calc_sumforces(){
+	int m, n;
+	Water* wp;
+	Water* np;
 
-}
+	//for all molecules
+	for( m = 0; m < m_N; m++){
+		wp = &m_molecs[m];
 
-double MD::calc_sumtorques(){
+		//for all neighbors
+		for ( n = 0; n < m_num_neigh[m]; n++){
+			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
+			if ((*np).m_moln < m) continue; //only calculate forces once
+
+			// LJ force between o1 and o2
+			// C force between o1 and h2a
+			// C force between o1 and h2b
+			// C force between o2 and h1a
+			// C force between o2 and h2b
+			// C force between o1 and o2
+			// C force between h1a and h2a
+			// C force between h1a and h2b
+			// C force between h1b and h2a
+			// C force between h1b and h2b 
+		}
+	}
 
 }
 
 double MD::calc_PE(){
+	int m, n;
+	Water* wp;
+	Water* np;
 
+	for( m = 0; m < m_N; m++){ //for all molecules
+		wp = &m_molecs[m];
+
+		for( n = 0; n < m_num_neigh[m]; n++){ //for all neighbors
+			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
+			if ((*np).m_moln < m) continue; //only calculate potential between two molecs once
+
+			// LJ force between o1 and o2
+			// C force between o1 and h2a
+			// C force between o1 and h2b
+			// C force between o2 and h1a
+			// C force between o2 and h2b
+			// C force between o1 and o2
+			// C force between h1a and h2a
+			// C force between h1a and h2b
+			// C force between h1b and h2a
+			// C force between h1b and h2b 
+		}
+	}
+}
+
+// Calcs LJ force between o1 and o2 and adds it to f1 and f2 force structs
+void MD::lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1_p, Point* cm2_p){
+
+	// Work out normalized direction vectors
+	Point r12 = {};
+	Point rc1 = {};
+	Point rc2 = {};
+	Point f12 = {};
+	Point f21 = {};
+	double dist12;
+	double mag_f;
+
+	(*o2_p).sub(*o1_p, &r12); // make r12 (not normalized)
+	(*o1_p).sub(*cm1_p, &rc1); // make rc1
+	(*o2_p).sub(*cm2_p, &rc2); // make rc2
+
+	dist12 = r12.get_mag();
+	r12.normalize(); //normalize 
+	mag_f = 24*(EPS/SIGMA)*( 2*pow((SIGMA/dist12), 13) - pow((SIGMA/dist12), 7) ); //magnitude of force
+	r12.mult(mag_f, &f12); // make f12
+	f12.mult(-1.0, &f21); // make f21
+
+	// force on o1 from o2
+	(*f1_p).fx += f12.x; // fx in positive (o1 to o2) direction
+	(*f1_p).fy += f12.y; // fy in positive (o1 to o2) direction
+	(*f1_p).t += rc1.zcross(f12);
+
+	// force on o2 from o1
+	(*f2_p).fx += f21.x; // force in (o2 to o1) direction
+	(*f2_p).fy += f21.y;
+	(*f2_p).t += rc2.zcross(f21);
+
+}
+
+// Calculates the Coulomb force between particle 1 and particle 2 and adds it to f1 and f2 force structs
+void MD::c_force(Force* f1_p, Force* f2_p, double q1, double q2, Point* loc1_p, Point* loc2_p, Point* cm1_p, Point* cm2_p){
+	Point r12 = {};
+	Point rc1 = {};
+	Point rc2 = {};
+	Point f12 = {};
+	Point f21 = {};
+	double dist12;
+	double mag_f;
+
+	(*loc2_p).sub(*loc1_p, &r12); //make r12
+	(*loc1_p).sub(*cm1_p, &rc1); //make rc1
+	(*loc2_p).sub(*cm2_p, &rc2); //make rc2
+
+	dist12 = r12.get_mag();
+	r12.normalize(); //normalize
+	mag_f = q1*q2/(dist12*dist12); //magnitude of force
+	r12.mult(mag_f, &f12); //make f12 = |f|*r_hat12 = force on 2
+	f12.mult(-1.0, &f21); //make f21 = |f|*r_hat21 = force on 1
+
+	// force on 1 from 2
+	(*f1_p).fx += f21.x;
+	(*f1_p).fy += f21.y;
+	(*f1_p).t += rc1.zcross(f21);
+
+	// force on 2 from 1
+	(*f2_p).fx += f12.x;
+	(*f2_p).fy += f12.y;
+	(*f2_p).t += rc2.zcross(f12);
+}
+
+// calcs and returns the LJ Potential between o1 and o2
+double MD::lj_pe(Point* o1_p, Point* o2_p){
+
+	// Work out normalized direction vectors
+	Point r12 = {};
+	double dist12;
+
+	(*o2_p).sub(*o1_p, &r12); // make r12
+	dist12 = r12.get_mag();
+	return 4*EPS*( pow((SIGMA/dist12), 12) - pow((SIGMA/dist12), 6) ); //magnitude of PE
+}
+
+// calcs and returns the Coloumb Potential between particle 1 and particle 2
+double MD::c_pe(double q1, double q2, Point* loc1_p, Point* loc2_p){
+	Point r12 = {};
+	double dist12;
+
+	(*loc2_p).sub(*loc1_p, &r12); //make r12
+	dist12 = r12.get_mag();
+	return q1*q2/dist12; //magnitude of force
 }
 
 // Calculate KE by summing the KEx, KEy, KEw for each molecule
@@ -153,9 +284,9 @@ double MD::calc_KE(){
 	Water* wp = &m_molecs[0];
 	for(int m = 0; m < m_N; m++){
 		wp = &m_molecs[m];
-		ret += .5*18*wp->m_v.x*wp->m_v.x; // (1/2)m vx^2
-		ret += .5*18*wp->m_v.y*wp->m_v.y; // (1/2)m vy^2
-		ret += .5*wp->m_I*wp->m_v.th*wp->m_v.th; // (1/2)I w^2
+		ret += .5*18*(wp->m_v.x)*(wp->m_v.x); // (1/2)m vx^2
+		ret += .5*18*(wp->m_v.y)*(wp->m_v.y); // (1/2)m vy^2
+		ret += .5*(wp->m_I)*(wp->m_v.th)*(wp->m_v.th); // (1/2)I w^2
 	}
 
 	return ret;

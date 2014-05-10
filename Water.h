@@ -8,7 +8,10 @@ class Water{
 	public:
 		Water() {}
 		Water(double xc, double yc, double theta_rad);
-		
+
+		int m_moln;
+
+		Force m_f; //The sum of fx, fy, t on the molecule
 		Point m_x; //COM location
 		Point m_v; //Velocity of molecule
 

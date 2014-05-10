@@ -2,9 +2,9 @@
 #define LIBRARY_H
 #include <cmath>
 #include <cstdio>
-#include <Cstdlib>
+#include <cstdlib>
 
-#define HOH_A (109.47*M_PI/180) // Degrees
+#define HOH_A (109.47*M_PI/180.0) // Degrees
 #define ROH 1.0 // Angstrom
 #define EPS 0.650 // KJ/mol
 #define SIGMA 3.166 // Angstrom
@@ -12,41 +12,38 @@
 #define NEIGHTS 20 // time between updating neighbors fs
 #define COORDTS 500 // time between storing coords fs
 #define ENERTS 100 // time between storing energy fs
-#define RC 9 // cutoff distance in angstroms
+#define RC 9.0 // cutoff distance in angstroms
+
+struct Force{
+	double fx, fy, t;
+};
 
 struct Point{
 	double x, y, th;
 
-	Point get_dir(){
+	void normalize(){
 		double mag = sqrt(x*x+y*y);
-		Point p = {
-			x/mag,
-			y/mag,
-			0.0
-		};
-		return p;
+		x = x/mag;
+		y = y/mag;
 	}
 
 	double get_mag(){
 		return sqrt(x*x+y*y);
 	}
 
-	Point add(Point addthis){
-		Point p = {
-			x+addthis.x,
-			y+addthis.y,
-			0.0
-		};
-		return p;
+	void add(Point addthis, Point* put_p){
+		(*put_p).x = x+addthis.x;
+		(*put_p).y = y+addthis.y;
 	}
 
-	Point sub(Point subthis){
-		Point p = {
-			x-subthis.x,
-			y-subthis.y,
-			0.0
-		};
-		return p;
+	void sub(Point subthis, Point* put_p){
+		(*put_p).x = x-subthis.x;
+		(*put_p).y = y-subthis.y;
+	}
+
+	void mult(double scalar, Point* put_p){
+		(*put_p).x = x*scalar;
+		(*put_p).y = y*scalar;
 	}
 
 	double dot(Point dotwthis){
