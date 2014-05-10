@@ -10,6 +10,8 @@
 #include "MD.h"
 using namespace std;
 
+////////////// REMEMBER TO CALCULATE FORCES BEFORE FIRST TIME STEP!!!!!! //////////////////////////////
+
 MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length){
 
 	//Error Check
@@ -85,7 +87,63 @@ void MD::evolve(){
 }
 
 void MD::single_timestep(){
+	Water* wp;
+	int m;
+	double ax, ay, alpha;
+	double posx, posy, theta;
 
+	//First half of v step
+	for(m = 0; m < m_N; m++){
+		wp = &m_molecs[m];
+
+		// get (d^2 _ / d _^2)
+		ax = (*wp).m_f.fx / 18.0; // sum(F_x)/m = a_x
+		ay = (*wp).m_f.fy / 18.0; // sum(F_y)/m = a_y
+		alpha = (*wp).m_f.t / (*wp).m_I; // sum(Torque)/I = alpha
+
+		// update velcoities 1/2 step
+		(*wp).m_v.x = (*wp).m_v.x + .5*TS*ax;
+		(*wp).m_v.y = (*wp).m_v.y + .5*TS*ay;
+		(*wp).m_v.th = (*wp).m_v.th + .5*TS*alpha;
+
+		// update position
+		posx = ( (*wp).m_x.x + TS * ((*wp).m_v.x) );
+		posy = ( (*wp).m_x.y + TS * ((*wp).m_v.y) );
+		theta = ( (*wp).m_x.th + TS * ((*wp).m_v.th) );
+
+		// periodic boundary conditions
+		while( posx > m_L) posx = posx - m_L;
+		while( posx < 0) posx = posx + m_L;
+		while( posy > m_L) posy = posy - m_L;
+		while( posy < 0) posy = posy + m_L;
+		while( theta < 0) theta = theta + 2*M_PI;
+		while( theta > 2*M_PI) theta = theta - 2*M_PI;
+
+		(*wp).m_x.x = posx;
+		(*wp).m_x.y = posx;
+		(*wp).m_x.th = theta;
+	}
+
+	//Update forces
+	calc_sumforces();
+
+	//Second half of v step
+	for(m = 0; m < m_N; m++){
+		wp = &m_molecs[m];
+
+		// get (d^2 _ / d _^2)
+		ax = (*wp).m_f.fx / 18.0; // sum(F_x)/m = a_x
+		ay = (*wp).m_f.fy / 18.0; // sum(F_y)/m = a_y
+		alpha = (*wp).m_f.t / (*wp).m_I; // sum(Torque)/I = alpha
+
+		// update velcoities 1/2 step
+		(*wp).m_v.x = (*wp).m_v.x + .5*TS*ax;
+		(*wp).m_v.y = (*wp).m_v.y + .5*TS*ay;
+		(*wp).m_v.th = (*wp).m_v.th + .5*TS*alpha;
+	}
+
+	//total momentum to zero
+	zero_total_momentum();
 }
 
 // Updates each molecule's neighbors list and number of neighbors
