@@ -10,9 +10,7 @@
 #include "MD.h"
 using namespace std;
 
-////////////// REMEMBER TO CALCULATE FORCES BEFORE FIRST TIME STEP!!!!!! //////////////////////////////
-
-MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length){
+MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length, int sim_type){
 
 	//Error Check
 	if( sqrt((double)num_molecules) !=  (double)((int) sqrt((double)num_molecules) )) {
@@ -23,6 +21,7 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 	m_L = box_length_angstroms; //box length angstroms
 	m_T = init_temp; //initial temp
 	m_simL = sim_length; //number of fs to run the sim
+	m_type = sim_type;
 
 	m_step = 0; //current step number
 	m_molecs = new Water[m_N](); //an array of N Waters
@@ -34,6 +33,12 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 
 	m_neigh = new Water*[m_N*m_N]; //an NxN array of neighbor pointers to Water molecules in m_molecs array
 	m_num_neigh = new int[m_N]; //an N array of number of neighbors for each molecule
+
+	if(m_type == 1){
+		init_pos_vel();
+	} else{
+		init_position();
+	}
 }
 
 MD::~MD(){
@@ -48,6 +53,8 @@ MD::~MD(){
 }
 
 //Sets the initial pos in lattice, random angle
+// Initializes velocities randomly and zeros total momentum
+// Calculates forces from initial velocities
 void MD::init_position(){
 	int sqN = (int)sqrt((double)m_N);
 	double dbet = (double)m_L/(double)sqN;
@@ -80,10 +87,101 @@ void MD::init_position(){
 
 	zero_total_momentum();
 	scale_init_temps();
+	calc_sumforces();
+	evolve();
+}
+
+//Sets the initial pos in lattice, random angle
+// Initializes velocities randomly and zeros total momentum
+// Calculates forces from initial velocities
+void MD::init_pos_vel(){
+	int sqN = (int)sqrt((double)m_N);
+	double dbet = (double)m_L/(double)sqN;
+
+	double xloc = dbet/2;
+	double yloc = dbet/2;
+	int moln = 0;
+	for(int r=0; r < sqN; r++){
+		for (int c=0; c < sqN; c++){
+			moln = r*sqN+c;
+			Point loc = {
+				xloc,
+				yloc,
+				((double)(rand() % 360))*M_PI/180.0
+			};
+			Point vel = {
+				(double)(rand() % 100),
+				(double)(rand() % 100),
+				(double)(rand() % 100)-50
+			};
+			m_molecs[moln].m_moln = moln;
+			m_molecs[moln].update_pos(loc);
+			m_molecs[moln].update_vel(vel);
+
+			xloc += dbet;
+		}
+		xloc = dbet/2;
+		yloc += dbet;
+	}
+
+	scale_init_temps();
+	calc_sumforces();
+	evolve();
 }
 
 void MD::evolve(){
+	int step, m;
+	double temp, ke, pe;
+	Water* wp;
 
+	ofstream outKE_file;
+	outKE_file.open("KEout.csv");
+	ofstream outPE_file;
+	outPE_file.open("PEout.csv");
+	ofstream outT_file;
+	outT_file.open("Tout.csv");
+	ofstream outVEL_file;
+	outVEL_file.open("VELout.csv");
+
+	//simL is in fs and time step is 1fs so things work great
+	for( step = 0; step < m_simL; step++){
+		single_timestep();
+
+		if( step % NEIGHTS == 0 ) update_neighbors();
+
+		//record temperature/energy
+		if( step % ENERTS == 0){
+			ke = calc_KE();
+			pe = calc_PE();
+			temp = calc_T();
+			
+			outKE_file << ke;
+			outKE_file << "\n";
+
+			outPE_file << pe;
+			outPE_file << "\n";
+
+			outT_file << temp;
+			outT_file << "\n";
+
+		}
+	}
+
+	//record final velocity distribution
+	for(m = 0; m < m_N; m++){
+		wp = &m_molecs[m];
+		
+		outVEL_file << (*wp).m_v.x;
+		outVEL_file << "\n";
+
+		outVEL_file << (*wp).m_v.y;
+		outVEL_file << "\n";
+	}
+
+	outKE_file.close();
+	outPE_file.close();
+	outT_file.close();
+	outVEL_file.close();
 }
 
 void MD::single_timestep(){
@@ -382,6 +480,11 @@ double MD::calc_T(){
 
 // Calculates the mean of every form of velocity and subtracts it from each velocity
 void MD::zero_total_momentum(){ // O(2N)
+
+	if(m_type == 1){
+		return;
+	}
+
 	double tot_vx = 0;
 	double tot_vy = 0;
 	double tot_w = 0;
