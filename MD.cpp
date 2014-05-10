@@ -226,9 +226,9 @@ void MD::lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1
 	double dist12;
 	double mag_f;
 
-	(*o2_p).sub(*o1_p, &r12); // make r12 (not normalized)
-	(*o1_p).sub(*cm1_p, &rc1); // make rc1
-	(*o2_p).sub(*cm2_p, &rc2); // make rc2
+	(*o2_p).sub(*o1_p, &r12, m_L); // make r12 (not normalized)
+	(*o1_p).sub(*cm1_p, &rc1, m_L); // make rc1
+	(*o2_p).sub(*cm2_p, &rc2, m_L); // make rc2
 
 	dist12 = r12.get_mag();
 	r12.normalize(); //normalize 
@@ -258,9 +258,9 @@ void MD::c_force(Force* f1_p, Force* f2_p, double q1, double q2, Point* loc1_p, 
 	double dist12;
 	double mag_f;
 
-	(*loc2_p).sub(*loc1_p, &r12); //make r12
-	(*loc1_p).sub(*cm1_p, &rc1); //make rc1
-	(*loc2_p).sub(*cm2_p, &rc2); //make rc2
+	(*loc2_p).sub(*loc1_p, &r12, m_L); //make r12
+	(*loc1_p).sub(*cm1_p, &rc1, m_L); //make rc1
+	(*loc2_p).sub(*cm2_p, &rc2, m_L); //make rc2
 
 	dist12 = r12.get_mag();
 	r12.normalize(); //normalize
@@ -286,7 +286,7 @@ double MD::lj_pe(Point* o1_p, Point* o2_p){
 	Point r12 = {};
 	double dist12;
 
-	(*o2_p).sub(*o1_p, &r12); // make r12
+	(*o2_p).sub(*o1_p, &r12, m_L); // make r12
 	dist12 = r12.get_mag();
 	return 4*EPS*( pow((SIGMA/dist12), 12) - pow((SIGMA/dist12), 6) ); //magnitude of PE
 }
@@ -296,7 +296,7 @@ double MD::c_pe(double q1, double q2, Point* loc1_p, Point* loc2_p){
 	Point r12 = {};
 	double dist12;
 
-	(*loc2_p).sub(*loc1_p, &r12); //make r12
+	(*loc2_p).sub(*loc1_p, &r12, m_L); //make r12
 	dist12 = r12.get_mag();
 	return q1*q2/dist12; //magnitude of force
 }

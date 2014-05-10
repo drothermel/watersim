@@ -38,9 +38,26 @@ struct Point{
 		(*put_p).y = y+addthis.y;
 	}
 
-	void sub(Point subthis, Point* put_p){
-		(*put_p).x = x-subthis.x;
-		(*put_p).y = y-subthis.y;
+	//Includes boundary conditions
+	void sub(Point subthis, Point* put_p, double L){
+		double dx = x - subthis.x;
+		double dy = y - subthis.y;
+		double halfL = L/2.0;
+		if(dx > halfL){
+			(*put_p).x = dx - L;
+		} else if(dx < -halfL){ 
+			(*put_p).x = dx + L;
+		} else{
+			(*put_p).x = dx;
+		}
+
+		if(dy > halfL){
+			(*put_p).y = dy - L;
+		} else if(dy < -halfL){
+			(*put_p).y = dy + L;
+		} else{
+			(*put_p).y = dy;
+		}
 	}
 
 	void mult(double scalar, Point* put_p){
