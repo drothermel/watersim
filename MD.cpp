@@ -84,6 +84,10 @@ void MD::evolve(){
 
 }
 
+void MD::single_timestep(){
+
+}
+
 // Updates each molecule's neighbors list and number of neighbors
 void MD::update_neighbors(){
 
@@ -132,43 +136,60 @@ void MD::update_neighbors(){
 
 }
 
-void MD::single_timestep(){
-
-}
-
+// Calculates the forces between every pair of molecules withing r_c of each other
+// Puts the sum of fx, fy, t into the Force (m_f) of each molecule.
 double MD::calc_sumforces(){
 	int m, n;
 	Water* wp;
 	Water* np;
+	Force* wpf_p;
+	Force* npf_p;
+	Point* cm1p_p;
+	Point* cm2p_p;
 
-	//for all molecules
+	//first clear molecules' forces
 	for( m = 0; m < m_N; m++){
 		wp = &m_molecs[m];
 
-		//for all neighbors
+		(*wp).m_f.fx = 0;
+		(*wp).m_f.fy = 0;
+		(*wp).m_f.t = 0;
+	}
+
+	//sum forces for all molecules
+	for( m = 0; m < m_N; m++){
+		wp = &m_molecs[m];
+
+		// for all neighbors
 		for ( n = 0; n < m_num_neigh[m]; n++){
 			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
 			if ((*np).m_moln < m) continue; //only calculate forces once
 
-			// LJ force between o1 and o2
-			// C force between o1 and h2a
-			// C force between o1 and h2b
-			// C force between o2 and h1a
-			// C force between o2 and h2b
-			// C force between o1 and o2
-			// C force between h1a and h2a
-			// C force between h1a and h2b
-			// C force between h1b and h2a
-			// C force between h1b and h2b 
+			wpf_p = &((*wp).m_f); // pointer to force on particle 1
+			npf_p = &((*np).m_f); // pointer to force on particle 2
+			cm1p_p = &((*wp).m_x); // pointer to CM location of particle 1
+			cm2p_p = &((*np).m_x); // pointer to CM location of particle 2
+
+			lj_force( wpf_p, npf_p, &((*wp).m_ol), &((*np).m_ol), cm1p_p, cm2p_p );// LJ o1 and o2
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_ol), &((*np).m_al), cm1p_p, cm2p_p );// C o1 and h2a
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_ol), &((*np).m_bl), cm1p_p, cm2p_p );// C o1 and h2b
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_al), &((*np).m_ol), cm1p_p, cm2p_p );// C h1a and o2
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_ol), cm1p_p, cm2p_p );// C h1b and o2
+			c_force( wpf_p, npf_p, QO, QO, &((*wp).m_ol), &((*np).m_ol), cm1p_p, cm2p_p );// C o1 and o2
+			c_force( wpf_p, npf_p, QH, QH, &((*wp).m_al), &((*np).m_al), cm1p_p, cm2p_p );// C h1a and h2a
+			c_force( wpf_p, npf_p, QH, QH, &((*wp).m_al), &((*np).m_bl), cm1p_p, cm2p_p );// C h1a and h2b
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_al), cm1p_p, cm2p_p );// C h1b and h2a
+			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_bl), cm1p_p, cm2p_p );// C h1b and h2b 
 		}
 	}
-
+	// at this point the molecule's Force (m_f) contains a sum of (fx, fy, t) for all molecules
 }
 
 double MD::calc_PE(){
 	int m, n;
 	Water* wp;
 	Water* np;
+	double pe_tot = 0;
 
 	for( m = 0; m < m_N; m++){ //for all molecules
 		wp = &m_molecs[m];
@@ -177,18 +198,20 @@ double MD::calc_PE(){
 			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
 			if ((*np).m_moln < m) continue; //only calculate potential between two molecs once
 
-			// LJ force between o1 and o2
-			// C force between o1 and h2a
-			// C force between o1 and h2b
-			// C force between o2 and h1a
-			// C force between o2 and h2b
-			// C force between o1 and o2
-			// C force between h1a and h2a
-			// C force between h1a and h2b
-			// C force between h1b and h2a
-			// C force between h1b and h2b 
+			pe_tot += lj_pe( &((*wp).m_ol), &((*np).m_ol) );// LJ PE between o1 and o2
+			pe_tot += c_pe( QO, QH, &((*wp).m_ol), &((*np).m_al) );// C PE between o1 and h2a
+			pe_tot += c_pe( QO, QH, &((*wp).m_ol), &((*np).m_bl) );// C PE between o1 and h2b
+			pe_tot += c_pe( QO, QH, &((*wp).m_al), &((*np).m_ol) );// C PE between h1a and o2
+			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_ol) );// C PE between h1b and o2
+			pe_tot += c_pe( QO, QO, &((*wp).m_ol), &((*np).m_ol) );// C PE between o1 and o2
+			pe_tot += c_pe( QH, QH, &((*wp).m_al), &((*np).m_al) );// C PE between h1a and h2a
+			pe_tot += c_pe( QH, QH, &((*wp).m_al), &((*np).m_bl) );// C PE between h1a and h2b
+			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_al) );// C PE between h1b and h2a
+			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_bl) );// C PE between h1b and h2b 
 		}
 	}
+
+	return pe_tot;
 }
 
 // Calcs LJ force between o1 and o2 and adds it to f1 and f2 force structs

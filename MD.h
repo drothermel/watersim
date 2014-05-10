@@ -29,8 +29,8 @@ class MD{
 		double* m_PE; //an array of sim_length/ENERTS PEs
 
 		void init_position();
-		void update_neighbors();
 		void single_timestep();
+		void update_neighbors();
 		double calc_sumforces();
 		double calc_PE();
 		void lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1_p, Point* cm2_p);

@@ -8,6 +8,8 @@
 #define ROH 1.0 // Angstrom
 #define EPS 0.650 // KJ/mol
 #define SIGMA 3.166 // Angstrom
+#define QO -0.820// Charge of Oxygen
+#define QH 0.410// Charge of Hydrogen
 #define TS 1 // timestep fs
 #define NEIGHTS 20 // time between updating neighbors fs
 #define COORDTS 500 // time between storing coords fs
