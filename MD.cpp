@@ -14,12 +14,14 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 
 	//Error Check
 	if( sqrt((double)num_molecules) !=  (double)((int) sqrt((double)num_molecules) )) {
-		printf("Number of Molecules not a perfect square ==> problems will occur, you should end sim");
+		printf("Number of Molecules not a perfect square ==> problems will occur, you should end sim\n");
 	}
 
 	m_N = num_molecules; //num particles
 	m_L = box_length_angstroms; //box length angstroms
 	m_T = init_temp; //initial temp
+	printf("Initial Temp: %d\n", (int) init_temp);
+	fflush(stdout);
 	m_simL = sim_length; //number of fs to run the sim
 	m_type = sim_type;
 
@@ -75,9 +77,10 @@ void MD::init_position(){
 				(double)(rand() % 100)-50,
 				(double)(rand() % 100)-50
 			};
-			m_molecs[moln].m_moln = moln;
-			m_molecs[moln].update_pos(loc);
-			m_molecs[moln].update_vel(vel);
+			m_molecs[moln].init(); //initialize constants
+			m_molecs[moln].m_moln = moln; //sets its molnumber
+			m_molecs[moln].update_pos(loc); //give it the position
+			m_molecs[moln].update_vel(vel); // and random velocity
 
 			xloc += dbet;
 		}
@@ -87,6 +90,11 @@ void MD::init_position(){
 
 	zero_total_momentum();
 	scale_init_temps();
+
+	printf("Temp after scaling: %d\n", (int) calc_T());
+	fflush(stdout);
+
+	update_neighbors();
 	calc_sumforces();
 	evolve();
 }
@@ -94,7 +102,7 @@ void MD::init_position(){
 //Sets the initial pos in lattice, random angle
 // Initializes velocities randomly and zeros total momentum
 // Calculates forces from initial velocities
-void MD::init_pos_vel(){
+void MD::init_pos_vel(){ //UPDATE BEFORE USING!!!!!!!!!!!!!!!!!!!!!!!!!!
 	int sqN = (int)sqrt((double)m_N);
 	double dbet = (double)m_L/(double)sqN;
 
@@ -155,6 +163,10 @@ void MD::evolve(){
 			pe = calc_PE();
 			temp = calc_T();
 			
+			printf("Step: %d \n", step);
+			fflush(stdout);
+			printf("Temp: %f, PE: %f, KE: %f\n", temp, pe, ke);
+			
 			outKE_file << ke;
 			outKE_file << "\n";
 
@@ -163,7 +175,6 @@ void MD::evolve(){
 
 			outT_file << temp;
 			outT_file << "\n";
-
 		}
 	}
 
@@ -171,10 +182,10 @@ void MD::evolve(){
 	for(m = 0; m < m_N; m++){
 		wp = &m_molecs[m];
 		
-		outVEL_file << (*wp).m_v.x;
+		outVEL_file << wp->m_v.x;
 		outVEL_file << "\n";
 
-		outVEL_file << (*wp).m_v.y;
+		outVEL_file << wp->m_v.y;
 		outVEL_file << "\n";
 	}
 
@@ -195,19 +206,19 @@ void MD::single_timestep(){
 		wp = &m_molecs[m];
 
 		// get (d^2 _ / d _^2)
-		ax = (*wp).m_f.fx / 18.0; // sum(F_x)/m = a_x
-		ay = (*wp).m_f.fy / 18.0; // sum(F_y)/m = a_y
-		alpha = (*wp).m_f.t / (*wp).m_I; // sum(Torque)/I = alpha
+		ax = wp->m_f.fx / 18.0; // sum(F_x)/m = a_x
+		ay = wp->m_f.fy / 18.0; // sum(F_y)/m = a_y
+		alpha = wp->m_f.t / wp->m_I; // sum(Torque)/I = alpha
 
 		// update velcoities 1/2 step
-		(*wp).m_v.x = (*wp).m_v.x + .5*TS*ax;
-		(*wp).m_v.y = (*wp).m_v.y + .5*TS*ay;
-		(*wp).m_v.th = (*wp).m_v.th + .5*TS*alpha;
+		wp->m_v.x = wp->m_v.x + .5*TS*ax;
+		wp->m_v.y = wp->m_v.y + .5*TS*ay;
+		wp->m_v.th = wp->m_v.th + .5*TS*alpha;
 
 		// update position
-		posx = ( (*wp).m_x.x + TS * ((*wp).m_v.x) );
-		posy = ( (*wp).m_x.y + TS * ((*wp).m_v.y) );
-		theta = ( (*wp).m_x.th + TS * ((*wp).m_v.th) );
+		posx = wp->m_x.x + TS * (wp->m_v.x);
+		posy = wp->m_x.y + TS * (wp->m_v.y);
+		theta = wp->m_x.th + TS * (wp->m_v.th);
 
 		// periodic boundary conditions
 		while( posx > m_L) posx = posx - m_L;
@@ -217,9 +228,9 @@ void MD::single_timestep(){
 		while( theta < 0) theta = theta + 2*M_PI;
 		while( theta > 2*M_PI) theta = theta - 2*M_PI;
 
-		(*wp).m_x.x = posx;
-		(*wp).m_x.y = posx;
-		(*wp).m_x.th = theta;
+		wp->m_x.x = posx;
+		wp->m_x.y = posy;
+		wp->m_x.th = theta;
 	}
 
 	//Update forces
@@ -230,14 +241,14 @@ void MD::single_timestep(){
 		wp = &m_molecs[m];
 
 		// get (d^2 _ / d _^2)
-		ax = (*wp).m_f.fx / 18.0; // sum(F_x)/m = a_x
-		ay = (*wp).m_f.fy / 18.0; // sum(F_y)/m = a_y
-		alpha = (*wp).m_f.t / (*wp).m_I; // sum(Torque)/I = alpha
+		ax = wp->m_f.fx / 18.0; // sum(F_x)/m = a_x
+		ay = wp->m_f.fy / 18.0; // sum(F_y)/m = a_y
+		alpha = wp->m_f.t / wp->m_I; // sum(Torque)/I = alpha
 
 		// update velcoities 1/2 step
-		(*wp).m_v.x = (*wp).m_v.x + .5*TS*ax;
-		(*wp).m_v.y = (*wp).m_v.y + .5*TS*ay;
-		(*wp).m_v.th = (*wp).m_v.th + .5*TS*alpha;
+		wp->m_v.x = wp->m_v.x + .5*TS*ax;
+		wp->m_v.y = wp->m_v.y + .5*TS*ay;
+		wp->m_v.th = wp->m_v.th + .5*TS*alpha;
 	}
 
 	//total momentum to zero
@@ -249,6 +260,7 @@ void MD::update_neighbors(){
 
 	Water* wp = &m_molecs[0];
 	Water* op = &m_molecs[0];
+	Point holder_p = {};
 	double dx = 0;
 	double dy = 0;
 	double dist = 0;
@@ -264,19 +276,13 @@ void MD::update_neighbors(){
 	//for all molecules except last
 	for(m = 0; m < m_N-1; m++){
 		wp = &m_molecs[m];
+
 		//for all molecules of higher number
 		for(o = m+1; o < m_N; o++){
 			op = &m_molecs[o];
 
-			dx = op->m_x.x - wp->m_x.x;
-			if (dx > halfL) dx = dx - m_L;
-			if (dx < -halfL) dx = dx + m_L;
-
-			dy = op->m_x.y - wp->m_x.y;
-			if (dy > halfL) dy = dy - m_L;
-			if (dy < -halfL) dy = dy + m_L;
-
-			dist = sqrt(dx*dx+dy*dy);
+			(op->m_x).sub((wp->m_x), &holder_p, m_L); // Get r between molecules CMs
+			dist = holder_p.get_mag(); // Get mag of r
 
 			// If w and o are close enough to each other
 			if(dist < RC){
@@ -307,9 +313,9 @@ double MD::calc_sumforces(){
 	for( m = 0; m < m_N; m++){
 		wp = &m_molecs[m];
 
-		(*wp).m_f.fx = 0;
-		(*wp).m_f.fy = 0;
-		(*wp).m_f.t = 0;
+		wp->m_f.fx = 0;
+		wp->m_f.fy = 0;
+		wp->m_f.t = 0;
 	}
 
 	//sum forces for all molecules
@@ -319,23 +325,23 @@ double MD::calc_sumforces(){
 		// for all neighbors
 		for ( n = 0; n < m_num_neigh[m]; n++){
 			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
-			if ((*np).m_moln < m) continue; //only calculate forces once
+			if ( np->m_moln < m ) continue; //only calculate forces once
 
-			wpf_p = &((*wp).m_f); // pointer to force on particle 1
-			npf_p = &((*np).m_f); // pointer to force on particle 2
-			cm1p_p = &((*wp).m_x); // pointer to CM location of particle 1
-			cm2p_p = &((*np).m_x); // pointer to CM location of particle 2
+			wpf_p = &( wp->m_f ); // pointer to force on particle 1
+			npf_p = &( np->m_f ); // pointer to force on particle 2
+			cm1p_p = &( wp->m_x ); // pointer to CM location of particle 1
+			cm2p_p = &( np->m_x ); // pointer to CM location of particle 2
 
-			lj_force( wpf_p, npf_p, &((*wp).m_ol), &((*np).m_ol), cm1p_p, cm2p_p );// LJ o1 and o2
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_ol), &((*np).m_al), cm1p_p, cm2p_p );// C o1 and h2a
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_ol), &((*np).m_bl), cm1p_p, cm2p_p );// C o1 and h2b
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_al), &((*np).m_ol), cm1p_p, cm2p_p );// C h1a and o2
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_ol), cm1p_p, cm2p_p );// C h1b and o2
-			c_force( wpf_p, npf_p, QO, QO, &((*wp).m_ol), &((*np).m_ol), cm1p_p, cm2p_p );// C o1 and o2
-			c_force( wpf_p, npf_p, QH, QH, &((*wp).m_al), &((*np).m_al), cm1p_p, cm2p_p );// C h1a and h2a
-			c_force( wpf_p, npf_p, QH, QH, &((*wp).m_al), &((*np).m_bl), cm1p_p, cm2p_p );// C h1a and h2b
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_al), cm1p_p, cm2p_p );// C h1b and h2a
-			c_force( wpf_p, npf_p, QO, QH, &((*wp).m_bl), &((*np).m_bl), cm1p_p, cm2p_p );// C h1b and h2b 
+			lj_force( wpf_p, npf_p, &( wp->m_ol ), &( np->m_ol ), cm1p_p, cm2p_p );// LJ o1 and o2
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_ol ), &( np->m_al ), cm1p_p, cm2p_p );// C o1 and h2a
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_ol ), &( np->m_bl ), cm1p_p, cm2p_p );// C o1 and h2b
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_al ), &( np->m_ol ), cm1p_p, cm2p_p );// C h1a and o2
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_bl ), &( np->m_ol ), cm1p_p, cm2p_p );// C h1b and o2
+			c_force( wpf_p, npf_p, QO, QO, &( wp->m_ol ), &( np->m_ol ), cm1p_p, cm2p_p );// C o1 and o2
+			c_force( wpf_p, npf_p, QH, QH, &( wp->m_al ), &( np->m_al ), cm1p_p, cm2p_p );// C h1a and h2a
+			c_force( wpf_p, npf_p, QH, QH, &( wp->m_al ), &( np->m_bl ), cm1p_p, cm2p_p );// C h1a and h2b
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_bl ), &( np->m_al ), cm1p_p, cm2p_p );// C h1b and h2a
+			c_force( wpf_p, npf_p, QO, QH, &( wp->m_bl ), &( np->m_bl ), cm1p_p, cm2p_p );// C h1b and h2b 
 		}
 	}
 	// at this point the molecule's Force (m_f) contains a sum of (fx, fy, t) for all molecules
@@ -352,18 +358,18 @@ double MD::calc_PE(){
 
 		for( n = 0; n < m_num_neigh[m]; n++){ //for all neighbors
 			np = &(*m_neigh[m*m_N + n]); //the mth molecule's nth neighbor
-			if ((*np).m_moln < m) continue; //only calculate potential between two molecs once
+			if ( np->m_moln < m) continue; //only calculate potential between two molecs once
 
-			pe_tot += lj_pe( &((*wp).m_ol), &((*np).m_ol) );// LJ PE between o1 and o2
-			pe_tot += c_pe( QO, QH, &((*wp).m_ol), &((*np).m_al) );// C PE between o1 and h2a
-			pe_tot += c_pe( QO, QH, &((*wp).m_ol), &((*np).m_bl) );// C PE between o1 and h2b
-			pe_tot += c_pe( QO, QH, &((*wp).m_al), &((*np).m_ol) );// C PE between h1a and o2
-			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_ol) );// C PE between h1b and o2
-			pe_tot += c_pe( QO, QO, &((*wp).m_ol), &((*np).m_ol) );// C PE between o1 and o2
-			pe_tot += c_pe( QH, QH, &((*wp).m_al), &((*np).m_al) );// C PE between h1a and h2a
-			pe_tot += c_pe( QH, QH, &((*wp).m_al), &((*np).m_bl) );// C PE between h1a and h2b
-			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_al) );// C PE between h1b and h2a
-			pe_tot += c_pe( QO, QH, &((*wp).m_bl), &((*np).m_bl) );// C PE between h1b and h2b 
+			pe_tot += lj_pe( &( wp->m_ol ), &( np->m_ol ) );// LJ PE between o1 and o2
+			pe_tot += c_pe( QO, QH, &( wp->m_ol ), &( np->m_al ) );// C PE between o1 and h2a
+			pe_tot += c_pe( QO, QH, &( wp->m_ol ), &( np->m_bl ) );// C PE between o1 and h2b
+			pe_tot += c_pe( QO, QH, &( wp->m_al ), &( np->m_ol ) );// C PE between h1a and o2
+			pe_tot += c_pe( QO, QH, &( wp->m_bl ), &( np->m_ol ) );// C PE between h1b and o2
+			pe_tot += c_pe( QO, QO, &( wp->m_ol ), &( np->m_ol ) );// C PE between o1 and o2
+			pe_tot += c_pe( QH, QH, &( wp->m_al ), &( np->m_al ) );// C PE between h1a and h2a
+			pe_tot += c_pe( QH, QH, &( wp->m_al ), &( np->m_bl ) );// C PE between h1a and h2b
+			pe_tot += c_pe( QO, QH, &( wp->m_bl ), &( np->m_al ) );// C PE between h1b and h2a
+			pe_tot += c_pe( QO, QH, &( wp->m_bl ), &( np->m_bl ) );// C PE between h1b and h2b 
 		}
 	}
 
@@ -382,9 +388,9 @@ void MD::lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1
 	double dist12;
 	double mag_f;
 
-	(*o2_p).sub(*o1_p, &r12, m_L); // make r12 (not normalized)
-	(*o1_p).sub(*cm1_p, &rc1, m_L); // make rc1
-	(*o2_p).sub(*cm2_p, &rc2, m_L); // make rc2
+	o2_p->sub(*o1_p, &r12, m_L); // make r12 (not normalized)
+	o1_p->sub(*cm1_p, &rc1, m_L); // make rc1
+	o2_p->sub(*cm2_p, &rc2, m_L); // make rc2
 
 	dist12 = r12.get_mag();
 	r12.normalize(); //normalize 
@@ -393,14 +399,14 @@ void MD::lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1
 	f12.mult(-1.0, &f21); // make f21
 
 	// force on o1 from o2
-	(*f1_p).fx += f12.x; // fx in positive (o1 to o2) direction
-	(*f1_p).fy += f12.y; // fy in positive (o1 to o2) direction
-	(*f1_p).t += rc1.zcross(f12);
+	f1_p->fx += f12.x; // fx in positive (o1 to o2) direction
+	f1_p->fy += f12.y; // fy in positive (o1 to o2) direction
+	f1_p->t += rc1.zcross(f12);
 
 	// force on o2 from o1
-	(*f2_p).fx += f21.x; // force in (o2 to o1) direction
-	(*f2_p).fy += f21.y;
-	(*f2_p).t += rc2.zcross(f21);
+	f2_p->fx += f21.x; // force in (o2 to o1) direction
+	f2_p->fy += f21.y;
+	f2_p->t += rc2.zcross(f21);
 
 }
 
@@ -414,9 +420,9 @@ void MD::c_force(Force* f1_p, Force* f2_p, double q1, double q2, Point* loc1_p, 
 	double dist12;
 	double mag_f;
 
-	(*loc2_p).sub(*loc1_p, &r12, m_L); //make r12
-	(*loc1_p).sub(*cm1_p, &rc1, m_L); //make rc1
-	(*loc2_p).sub(*cm2_p, &rc2, m_L); //make rc2
+	loc2_p->sub(*loc1_p, &r12, m_L); //make r12
+	loc1_p->sub(*cm1_p, &rc1, m_L); //make rc1
+	loc2_p->sub(*cm2_p, &rc2, m_L); //make rc2
 
 	dist12 = r12.get_mag();
 	r12.normalize(); //normalize
@@ -425,14 +431,14 @@ void MD::c_force(Force* f1_p, Force* f2_p, double q1, double q2, Point* loc1_p, 
 	f12.mult(-1.0, &f21); //make f21 = |f|*r_hat21 = force on 1
 
 	// force on 1 from 2
-	(*f1_p).fx += f21.x;
-	(*f1_p).fy += f21.y;
-	(*f1_p).t += rc1.zcross(f21);
+	f1_p->fx += f21.x;
+	f1_p->fy += f21.y;
+	f1_p->t += rc1.zcross(f21);
 
 	// force on 2 from 1
-	(*f2_p).fx += f12.x;
-	(*f2_p).fy += f12.y;
-	(*f2_p).t += rc2.zcross(f12);
+	f2_p->fx += f12.x;
+	f2_p->fy += f12.y;
+	f2_p->t += rc2.zcross(f12);
 }
 
 // calcs and returns the LJ Potential between o1 and o2
@@ -442,7 +448,7 @@ double MD::lj_pe(Point* o1_p, Point* o2_p){
 	Point r12 = {};
 	double dist12;
 
-	(*o2_p).sub(*o1_p, &r12, m_L); // make r12
+	o2_p->sub(*o1_p, &r12, m_L); // make r12
 	dist12 = r12.get_mag();
 	return 4*EPS*( pow((SIGMA/dist12), 12) - pow((SIGMA/dist12), 6) ); //magnitude of PE
 }
@@ -452,7 +458,7 @@ double MD::c_pe(double q1, double q2, Point* loc1_p, Point* loc2_p){
 	Point r12 = {};
 	double dist12;
 
-	(*loc2_p).sub(*loc1_p, &r12, m_L); //make r12
+	loc2_p->sub(*loc1_p, &r12, m_L); //make r12
 	dist12 = r12.get_mag();
 	return q1*q2/dist12; //magnitude of force
 }

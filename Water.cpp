@@ -28,6 +28,15 @@ Water::Water(double xc, double yc, double theta_rad){
 	update_oab();
 }
 
+void Water::init(){
+	m_docm = (1.0/9.0) * cos(HOH_A / 2.0);
+	m_I = 2 - (2/9)*cos(HOH_A/2.0)*cos(HOH_A/2.0);
+
+	m_ol.th = 0.0;
+	m_al.th = 0.0;
+	m_bl.th = 0.0;
+}
+
 void Water::update_pos(Point nx){
 
 	m_x.x = nx.x;

@@ -24,6 +24,8 @@ class Water{
 		void update_pos(Point newpos);
 		void update_vel(Point newvel);
 
+		void init(); //Initializes constants when Water(){} is used for constructor.
+
 	private:
 		double m_docm; //Distance from oxygen and CM
 		void update_oab();
