@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-	MD* moldyn = new MD(9.0, 4, 300, 100000, 0); //(boxL, nmols, T, steps, type)
-
-	printf("Made it to the end!");
+	MD* moldyn = new MD(19.0, 225, 3, 100); //(boxL, nmols, T, steps)
+	printf("Made it to the end\n");
+	fflush(stdout);
 }

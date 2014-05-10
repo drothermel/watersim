@@ -14,8 +14,6 @@
 #define QH 0.410// Charge of Hydrogen
 #define TS 1 // timestep fs
 #define NEIGHTS 20 // time between updating neighbors fs
-#define COORDTS 500 // time between storing coords fs
-#define ENERTS 100 // time between storing energy fs (100)
 #define RC 9.0 // cutoff distance in angstroms
 
 struct Force{

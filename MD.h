@@ -7,27 +7,22 @@
 class MD{
 	
 	public:
-		MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length, int sim_type);
+		MD(double box_length_angstroms, int num_molecules, double init_temp, int sim_length);
 		virtual ~MD();
 
 		int m_N; //num particles
 		double m_L; //box length angstroms
 		double m_T; //initial temp
 		int m_simL; //number of fs to run the sim, equivalent to number of timesteps since 1fs = timestep
-		int m_type; //which sim are we running
 
 		void evolve();
 
 	private:
 		int m_step; //current step number
 		Water* m_molecs; //an array of N Waters
-		Point* m_xcoords; //an array of (sim_length/COORDTS) arrays of N Points (collapsed into one array)
-		Point* m_vcoords; //an array of (sim_length/COORDTS) arrays of N Points (collapsed into one array)
 		Water** m_neigh; //an NxN array of neighbor pointers to Water molecules in m_molecs array
 		int* m_num_neigh; //an N array of number of neighbors for each molecule
-		double* m_temps; //an array of sim_length/ENERTS temperatures
-		double* m_KE; //an array of sim_length/ENERTS KEs
-		double* m_PE; //an array of sim_length/ENERTS PEs
+		bool m_zeroTM;
 
 		void init_position();
 		void init_pos_vel();
