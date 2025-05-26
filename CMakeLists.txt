@@ -7,4 +7,4 @@ add_executable(water_main Main.cpp
 							MD.cpp)
 
 set(GCC_COMPILE_FLAGS "-lm")
-add_definitions($(GCC_COMPILE_FLAGS))
+target_link_libraries(water_main m)

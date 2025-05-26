@@ -28,7 +28,7 @@ class MD{
 		void init_pos_vel();
 		void single_timestep();
 		void update_neighbors();
-		double calc_sumforces();
+                void calc_sumforces();
 		double calc_PE();
 		void lj_force(Force* f1_p, Force* f2_p, Point* o1_p, Point* o2_p, Point* cm1_p, Point* cm2_p);
 		void c_force(Force* f1_p, Force* f2_p, double q1, double q2, Point* loc1_p, Point* loc2_p, Point* cm1_p, Point* cm2_p);

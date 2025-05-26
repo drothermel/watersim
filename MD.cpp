@@ -30,17 +30,17 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 	m_neigh = new Water*[m_N*m_N]; //an NxN array of neighbor pointers to Water molecules in m_molecs array
 	m_num_neigh = new int[m_N]; //an N array of number of neighbors for each molecule
 
-	if( m_zeroTM = false){
-		init_pos_vel();
-	} else{
-		init_position();
-	}
+        if (!m_zeroTM) {
+                init_pos_vel();
+        } else {
+                init_position();
+        }
 }
 
 MD::~MD(){
-	delete m_neigh;
-	delete m_num_neigh;
-	delete m_molecs;	
+        delete[] m_neigh;
+        delete[] m_num_neigh;
+        delete[] m_molecs;
 }
 
 //Sets the initial pos in lattice, random angle
@@ -262,9 +262,9 @@ void MD::update_neighbors(){
 
 }
 
-// Calculates the forces between every pair of molecules withing r_c of each other
+// Calculates the forces between every pair of molecules within r_c of each other
 // Puts the sum of fx, fy, t into the Force (m_f) of each molecule.
-double MD::calc_sumforces(){
+void MD::calc_sumforces(){
 	int m, n;
 	Water* wp;
 	Water* np;
