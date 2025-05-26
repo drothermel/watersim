@@ -30,17 +30,17 @@ MD::MD(double box_length_angstroms, int num_molecules, double init_temp, int sim
 	m_neigh = new Water*[m_N*m_N]; //an NxN array of neighbor pointers to Water molecules in m_molecs array
 	m_num_neigh = new int[m_N]; //an N array of number of neighbors for each molecule
 
-	if( m_zeroTM = false){
-		init_pos_vel();
-	} else{
-		init_position();
-	}
+        if (!m_zeroTM) {
+                init_pos_vel();
+        } else {
+                init_position();
+        }
 }
 
 MD::~MD(){
-	delete m_neigh;
-	delete m_num_neigh;
-	delete m_molecs;	
+        delete[] m_neigh;
+        delete[] m_num_neigh;
+        delete[] m_molecs;
 }
 
 //Sets the initial pos in lattice, random angle
