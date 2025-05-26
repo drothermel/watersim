@@ -262,9 +262,9 @@ void MD::update_neighbors(){
 
 }
 
-// Calculates the forces between every pair of molecules withing r_c of each other
+// Calculates the forces between every pair of molecules within r_c of each other
 // Puts the sum of fx, fy, t into the Force (m_f) of each molecule.
-double MD::calc_sumforces(){
+void MD::calc_sumforces(){
 	int m, n;
 	Water* wp;
 	Water* np;
